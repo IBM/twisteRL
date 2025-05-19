@@ -11,14 +11,11 @@ copyright notice, and modified files need to carry a notice indicating
 that they have been altered from the originals.
 */
 
-use pyo3::prelude::*;
-
 use rand::distributions::{Distribution, Uniform};
 use crate::rl::env::Env;
 
 
 // This is the Env definition
-#[pyclass]
 #[derive(Clone)]
 pub struct Puzzle {
     pub state: Vec<usize>,
@@ -33,10 +30,7 @@ pub struct Puzzle {
 }
 
 
-// This specifies how we initialize new envs from python
-#[pymethods]
 impl Puzzle {
-    #[new]
     pub fn new(
         width: usize,
         height: usize,
@@ -179,6 +173,3 @@ impl Env for Puzzle {
     }
     
 }
-
-// Dont forget this line! this implements all the RL algorithms for your env
-impl_algorithms!(Puzzle);

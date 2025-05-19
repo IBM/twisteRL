@@ -9,11 +9,12 @@ name = "twisterl_rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.22.3", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.24.2", features = ["extension-module", "multiple-pymethods"] }
 nalgebra = "0.33.0"
 rand = "0.8.4"
 rayon = "1.1.0"
 petgraph = "0.6.5"
+dyn-clone = "1.0.19"
 
 [profile.release]
 opt-level = 3

@@ -12,9 +12,9 @@ that they have been altered from the originals.
 */
 
 use std::vec;
+use dyn_clone::DynClone;
 
-
-pub trait Env {
+pub trait Env : DynClone + Send + Sync {
     // Returns the number of possible actions
     fn num_actions(&self) -> usize;
 
@@ -51,3 +51,5 @@ pub trait Env {
     // Returns a list of possible permutations on the observations and the corresponding permutations on actions
     fn twists(&self) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {(vec![], vec![])}
 }
+
+dyn_clone::clone_trait_object!(Env);

@@ -19,6 +19,10 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from twisterl.defaults import make_config
 
+from twisterl import twisterl_rs
+evaluate = twisterl_rs.collector.evaluate
+solve = twisterl_rs.collector.solve
+
 from loguru import logger
 
 
@@ -33,8 +37,6 @@ def timed(func):
 
 
 class Algorithm:
-    collect_fn: str
-
     def __init__(self, env, policy, config, run_path=None):
         self.run_path = run_path
         
@@ -45,8 +47,7 @@ class Algorithm:
         self.env = env
         self.obs_size = policy.obs_size
         self.num_actions = self.env.num_actions()
-        self.collect_rs = getattr(self.env, self.collect_fn) 
-
+        
         # Make full config
         self.config = make_config(type(self).__name__, config)
 
@@ -87,12 +88,12 @@ class Algorithm:
     @timed
     def evaluate(self, kwargs):
         """Receives python-rust object and evaluates the policy with some parameters."""
-        return self.env.evaluate(self.rs_pol, **kwargs)
+        return evaluate(self.env, self.rs_pol, **kwargs)
     
     @timed
     def collect(self):
         """Collects data and returns the dataset"""
-        return self.collect_rs(self.rs_pol, **self.config['collecting'])
+        return self.collector.collect(self.env, self.rs_pol)
 
     @timed
     def learn_step(self):
@@ -176,7 +177,8 @@ class Algorithm:
         self.env.set_state(state)
 
         # Then solve 
-        (success, reward), actions = self.env.solve(
+        (success, reward), actions = solve(
+            self.env,
             self.rs_pol, 
             deterministic=deterministic, 
             num_searches=num_searches, 

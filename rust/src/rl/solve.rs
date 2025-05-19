@@ -10,45 +10,86 @@ Any modifications or derivative works of this code must retain this
 copyright notice, and modified files need to carry a notice indicating
 that they have been altered from the originals.
 */
-
 use crate::rl::env::Env;
-use super::search::Search;
-use crate::nn::policy::{sample, argmax, Policy};
+use crate::nn::policy::{Policy, sample, argmax};
+use super::search::predict_probs_mcts;
+use dyn_clone::clone_box;
 
-pub trait Solve: Env + Search {
-    fn single_solve(&self, policy: &Policy, deterministic: bool, num_mcts_searches: usize, C: f32, max_expand_depth: usize) -> ((f32, f32), Vec<usize>) {
-        let mut total_val = 0.0;
-        let mut state = (*self).clone();
-        let mut solution: Vec<usize> = vec![];
+pub fn single_solve(
+    env: Box<dyn Env>,
+    policy: &Policy,
+    deterministic: bool,
+    num_mcts_searches: usize,
+    C: f32,
+    max_expand_depth: usize,
+) -> ((f32, f32), Vec<usize>) {
+    let mut env = clone_box(&*env);
 
-        while !state.is_final() {
-            let val = state.reward();
-            let masks = state.masks();
-            let obs = state.observe();
-            total_val += val;
-            
-            let probs = if num_mcts_searches==0 {policy.predict(obs, masks).0} else {state.predict_probs_mcts(policy, num_mcts_searches, C, max_expand_depth)};
+    let mut total_val = 0.0;
+    let mut solution = Vec::new();
 
-            let action = if deterministic {argmax(&probs)} else {sample(&probs)};
-            state.step(action);
-            solution.push(action);
-        }
-
-        let val = state.reward();
+    // step until final
+    while !env.is_final() {
+        let val = env.reward();
+        let obs = env.observe();
+        let masks = env.masks();
         total_val += val;
+        
+        // choose probs via either policy or MCTS
+        let probs = if num_mcts_searches == 0 {
+            policy.predict(obs, masks).0
+        } else {
+            // this will internally clone/reset the env for search
+            predict_probs_mcts(
+                env.clone(), 
+                policy, 
+                num_mcts_searches, 
+                C, 
+                max_expand_depth,
+            )
+        };
 
-        (((val == 1.0) as usize as f32, total_val), solution)
+        let action = if deterministic {
+            argmax(&probs)
+        } else {
+            sample(&probs)
+        };
+
+        env.step(action);
+        solution.push(action);
     }
 
-    fn solve(&self, policy: &Policy, deterministic: bool, num_searches: usize, num_mcts_searches: usize, C: f32, max_expand_depth: usize) -> ((f32, f32), Vec<usize>) {
-        let mut best: ((f32, f32), Vec<usize>) = ((0.0, -1e9), vec![]);
+    let val = env.reward();
+    total_val += val;
 
-        for _ in 0..num_searches {
-            let next_val = self.single_solve(policy, deterministic, num_mcts_searches, C, max_expand_depth);
-            if next_val.0 > best.0 {
-                best = next_val;
-            }
+    (((val == 1.0) as usize as f32, total_val), solution)
+}
+
+pub fn solve(
+    env: Box<dyn Env>,
+    policy: &Policy,
+    deterministic: bool,
+    num_searches: usize,
+    num_mcts_searches: usize,
+    C: f32,
+    max_expand_depth: usize,
+) -> ((f32, f32), Vec<usize>) {
+    let mut best: ((f32, f32), Vec<usize>) = ((0.0, f32::NEG_INFINITY), Vec::new());
+
+    for _ in 0..num_searches {
+        let next_val = single_solve(
+            env.clone(),
+            policy,
+            deterministic,
+            num_mcts_searches,
+            C,
+            max_expand_depth,
+        );
+
+        if next_val.0 > best.0 {
+            best = next_val;
         }
-        best
     }
+
+    best
 }

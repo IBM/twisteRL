@@ -14,14 +14,16 @@ import torch
 import numpy as np
 
 from twisterl.rl.algorithm import Algorithm, timed
-
+from twisterl import twisterl_rs
 
 class AZ(Algorithm):
-    collect_fn = "collect_az"
+    def __init__(self, env, policy, config, run_path=None):
+        super().__init__(env, policy, config, run_path)
+        self.collector = twisterl_rs.collector.AZCollector(**self.config["collecting"])
 
     @timed
     def data_to_torch(self, data):
-        obs, probs, vals = data
+        obs, probs, vals = data.obs, data.logits, data.additional_data["remaining_values"]
 
         np_obs = np.zeros((len(obs), self.obs_size), dtype=float)
         for i, obs_i in enumerate(obs):

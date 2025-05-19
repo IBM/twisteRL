@@ -16,20 +16,18 @@ use std::borrow::Borrow;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use crate::rl::env::Env;
+use crate::python_interface::env::PyBaseEnv;
 
-
-
-#[pyclass]
-pub struct PyEnv {
+pub struct PyEnvImpl {
     py_env: Py<PyAny>, // Reference to the Python object implementing the environment
     difficulty: usize
 }
 
 
-impl Clone for PyEnv {
+impl Clone for PyEnvImpl {
     fn clone(&self) -> Self {
         Python::with_gil(|py| {
-            PyEnv {
+            PyEnvImpl {
                 py_env: self.py_env.call_method0(py, "copy").expect("Python `copy` method failed."),
                 difficulty: self.difficulty
             }
@@ -38,16 +36,14 @@ impl Clone for PyEnv {
 }
 
 
-#[pymethods]
-impl PyEnv {
+impl PyEnvImpl {
     /// Constructor: Create a new `PythonEnv` from a Python object
-    #[new]
     pub fn new(py_env: Py<PyAny>) -> Self {
-        PyEnv { py_env, difficulty:1 }
+        PyEnvImpl { py_env, difficulty:1 }
     }
 }
 
-impl Env for PyEnv {
+impl Env for PyEnvImpl {
     // Sets the current difficulty
     fn set_difficulty(&mut self, difficulty: usize) {
         self.difficulty = difficulty;
@@ -146,5 +142,15 @@ impl Env for PyEnv {
 }
 
 
-// Dont forget this line! this implements all the RL algorithms for your env
-impl_algorithms!(PyEnv);
+#[pyclass(subclass, extends=PyBaseEnv)]
+pub struct PyEnv {}
+
+#[pymethods]
+impl PyEnv {
+    #[new]
+    pub fn new(py_env: Py<PyAny>) -> (Self, PyBaseEnv) {
+        let env_impl = PyEnvImpl::new(py_env);
+        let env = Box::new(env_impl);
+        (PyEnv {}, PyBaseEnv { env: env })
+    }
+}

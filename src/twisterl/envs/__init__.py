@@ -12,38 +12,13 @@
 
 from twisterl import twisterl_rs
 
-Puzzle = twisterl_rs.env.Puzzle
-
-
 from twisterl.utils import dynamic_import
 
-class PyEnv:
-    def __init__(self, pyenv_cls, **env_config):
+Puzzle = twisterl_rs.env.Puzzle
+
+class PyEnv(twisterl_rs.env.PyEnv):
+    def __new__(cls, pyenv_cls, **env_config):
+        # we need to overload new instead of init due to PyO3
         env_cls = dynamic_import(pyenv_cls)
-        self.rs_env = twisterl_rs.env.PyEnv(env_cls(**env_config))
-    
-    def __getattr__(self, name):
-        # Called when an attribute/method is not found in PyCls
-        # Redirect calls to the RustCls instance
-        attr = getattr(self.rs_env, name)
-        if callable(attr):
-            # If the attribute is callable, return it as a method
-            def wrapper(*args, **kwargs):
-                return attr(*args, **kwargs)
-            return wrapper
-        else:
-            # Otherwise, return it as is
-            return attr
-
-    @property
-    def difficulty(self):
-        return self.rs_env.difficulty
-
-    @difficulty.setter
-    def difficulty(self, new_value):
-        self.rs_env.difficulty = new_value
-
-    def __dir__(self):
-        # Override dir() to include attributes and methods of RustCls
-        return super().__dir__() + dir(self.rs_env)
-    
+        instance = super().__new__(cls, env_cls(**env_config))
+        return instance
