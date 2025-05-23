@@ -20,15 +20,15 @@ pub mod envs;
 pub mod python_interface;
 
 // NN Module
-use crate::nn::modules::Sequential;
-use crate::nn::layers::{EmbeddingBag, Linear};
-use crate::nn::policy::Policy;
+use crate::python_interface::modules::PySequential;
+use crate::python_interface::layers::{PyEmbeddingBag, PyLinear};
+use crate::python_interface::policy::PyPolicy;
 
 fn init_nn_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<EmbeddingBag>()?;
-    m.add_class::<Sequential>()?;
-    m.add_class::<Linear>()?;
-    m.add_class::<Policy>()?;
+    m.add_class::<PyEmbeddingBag>()?;
+    m.add_class::<PySequential>()?;
+    m.add_class::<PyLinear>()?;
+    m.add_class::<PyPolicy>()?;
     Ok(())
 }
 

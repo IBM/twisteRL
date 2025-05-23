@@ -17,22 +17,19 @@ use rand::{prelude::Distribution, Rng};
 use crate::nn::modules::Sequential;
 use crate::nn::layers::EmbeddingBag;
 
-#[pyclass]
 #[derive(Clone)]
 pub struct Policy {
-    embeddings: EmbeddingBag,
-    common: Sequential,
-    action_net: Sequential,
-    value_net: Sequential,
+    embeddings: Box<EmbeddingBag>,
+    common: Box<Sequential>,
+    action_net: Box<Sequential>,
+    value_net: Box<Sequential>,
     obs_perms: Vec<Vec<usize>>,
     act_perms: Vec<Vec<usize>>
 }
 
-#[pymethods]
 impl Policy {
-    #[new]
-    pub fn new(embeddings: EmbeddingBag, common: Sequential, action_net: Sequential, value_net: Sequential, obs_perms: Vec<Vec<usize>>, act_perms: Vec<Vec<usize>>) -> Self {
-        Self {embeddings, common, action_net, value_net, obs_perms, act_perms }
+    pub fn new(embeddings: Box<EmbeddingBag>, common: Box<Sequential>, action_net: Box<Sequential>, value_net: Box<Sequential>, obs_perms: Vec<Vec<usize>>, act_perms: Vec<Vec<usize>>) -> Self {
+        Self { embeddings: embeddings, common, action_net, value_net, obs_perms, act_perms }
     }
 
     pub fn predict(&self, obs: Vec<usize>, masks: Vec<bool>) -> (Vec<f32>, f32) {
@@ -75,7 +72,6 @@ impl Policy {
         n_perm
     }
 
-    #[pyo3(signature = (obs, n_perm=None))]
     fn _raw_predict(&self, mut obs: Vec<usize>, n_perm: Option<usize>) -> (Vec<f32>, f32) {
         // Permute the obs according to the obs_perm
         if let Some(pi) = n_perm {

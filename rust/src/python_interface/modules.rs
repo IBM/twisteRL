@@ -11,25 +11,23 @@ copyright notice, and modified files need to carry a notice indicating
 that they have been altered from the originals.
 */
 
-use nalgebra::DVector;
+use pyo3::prelude::*;
 
-use crate::nn::layers::Linear;
+use crate::nn::modules::Sequential;
+use super::layers::PyLinear;
 
+#[pyclass(name="Sequential")]
 #[derive(Clone)]
-pub struct Sequential {
-    layers: Vec<Box<Linear>>,
+pub struct PySequential {
+    pub seq: Box<Sequential>,
 }
 
-impl Sequential {
-    pub fn new(layers: Vec<Box<Linear>>) -> Self {
-        Self { layers }
-    }
-
-    pub fn forward(&self, input: DVector<f32>) -> DVector<f32> {
-        let mut x = input;
-        for layer in &self.layers {
-            x = layer.forward(&x);
-        }
-        x
+#[pymethods]
+impl PySequential {
+    #[new]
+    pub fn new(layers: Vec<PyLinear>) -> Self {
+        let rs_layers = layers.iter().map(|layer| layer.linear.clone()).collect();
+        let seq = Box::new(Sequential::new(rs_layers));
+        PySequential { seq }
     }
 }

@@ -11,10 +11,8 @@ copyright notice, and modified files need to carry a notice indicating
 that they have been altered from the originals.
 */
 
-use pyo3::prelude::*;
 use nalgebra::{DMatrix, DVector};
 
-#[pyclass]
 #[derive(Clone)]
 pub struct Linear {
     weights: DMatrix<f32>,
@@ -23,17 +21,13 @@ pub struct Linear {
 }
 
 
-#[pymethods]
 impl Linear {
-    #[new]
     pub fn new(weights_vector: Vec<f32>, bias_vector: Vec<f32>, apply_relu: bool) -> Self {
         let weights = DMatrix::from_vec(bias_vector.len(), weights_vector.len() / bias_vector.len(), weights_vector);
         let bias = DVector::from_vec(bias_vector);
         Self { weights, bias, apply_relu }
     }
-}
-
-impl Linear {
+    
     pub fn forward(&self, input: &DVector<f32>) -> DVector<f32> {
         let mut out = (&self.weights * input) + &self.bias;
         if self.apply_relu {
@@ -43,7 +37,6 @@ impl Linear {
     }
 }
 
-#[pyclass]
 #[derive(Clone)]
 pub struct EmbeddingBag {
     vectors: Vec<DVector<f32>>,
@@ -53,17 +46,13 @@ pub struct EmbeddingBag {
     conv_dim: usize
 }
 
-#[pymethods]
 impl EmbeddingBag {
-    #[new]
     pub fn new(vec_vectors: Vec<Vec<f32>>, bias_vector: Vec<f32>, apply_relu: bool, obs_shape: Vec<usize>, conv_dim: usize) -> Self {
         let vectors = vec_vectors.into_iter().map(|vec| DVector::from_vec(vec)).collect();
         let bias = DVector::from_vec(bias_vector);
         Self { vectors, bias, apply_relu, obs_shape, conv_dim }
     }
-}
 
-impl EmbeddingBag {
     pub fn forward(&self, input: &Vec<usize>) -> DVector<f32> {
         let mut out = self.bias.clone();
         if self.obs_shape.len() == 1 {
