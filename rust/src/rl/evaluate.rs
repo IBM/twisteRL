@@ -13,6 +13,7 @@ that they have been altered from the originals.
 
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
+use anyhow::Result;
 
 use crate::rl::env::Env;
 use crate::nn::policy::Policy;
@@ -29,7 +30,7 @@ pub fn evaluate(
     C: f32,
     max_expand_depth: usize,
     num_cores: usize,
-) -> (f32, f32) {
+) -> Result<(f32, f32)> {
     let mut env = env.clone();
     if num_cores <= 1 {
         let mut successes = 0.0;
@@ -48,7 +49,7 @@ pub fn evaluate(
             successes += success;
             rewards  += reward;
         }
-        (successes/(num_episodes as f32), rewards/(num_episodes as f32))
+        Ok((successes/(num_episodes as f32), rewards/(num_episodes as f32)))
     } else {
         // Parallel evaluation via Rayon
         let pool = ThreadPoolBuilder::new()
@@ -83,6 +84,6 @@ pub fn evaluate(
                 )
         });
 
-        (successes / (num_episodes as f32), total_vals / (num_episodes as f32))
+        Ok((successes / (num_episodes as f32), total_vals / (num_episodes as f32)))
     }
 }

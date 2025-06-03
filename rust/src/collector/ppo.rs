@@ -12,8 +12,9 @@ that they have been altered from the originals.
 */
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
+use anyhow::Result;
 
-use crate::collector::collector::{Collector, CollectedData};
+use crate::collector::collector::{Collector, CollectedData, merge};
 use crate::nn::policy::{Policy, sample_from_logits};
 use crate::rl::env::Env;
 
@@ -102,31 +103,22 @@ impl PPOCollector {
 }
 
 impl Collector for PPOCollector {
-    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> CollectedData {
+    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> Result<CollectedData> {
         if self.num_cores == 1 {
-            merge(
+            Ok(merge(
                 (0..self.num_episodes).into_iter()  // Create a parallel iterator over the range 0..num_episodes
                     .map(|_| self.single_collect(env, policy)) // For each item in the range run a collection
-                    .collect()
+                    .collect())?
             )
         } else {
-            let pool: rayon::ThreadPool = ThreadPoolBuilder::new().num_threads(self.num_cores).build().unwrap();
+            let pool: rayon::ThreadPool = ThreadPoolBuilder::new().num_threads(self.num_cores).build()?;
             // Use the thread pool to run the generation in parallel
-            merge(pool.install(|| {
+            Ok(merge(pool.install(|| {
                 (0..self.num_episodes).into_par_iter()  // Create a parallel iterator over the range 0..num_episodes
                     .map(|_| self.single_collect(env, policy)) // For each item in the range run a collection
                     .collect()
-            }))
+            }))?)
         }
     }
 }
 
-fn merge(
-    mut chunks: Vec<CollectedData>,
-) -> CollectedData {
-    let mut merged = chunks.pop().unwrap();
-    for chunk in chunks {
-        merged.merge(&chunk);
-    }
-    merged
-}

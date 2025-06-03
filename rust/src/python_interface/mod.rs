@@ -13,6 +13,7 @@ that they have been altered from the originals.
 
 pub mod collector;
 pub mod env;
+pub mod error_mapping;
 pub mod layers;
 pub mod modules;
 pub mod policy;

@@ -7,7 +7,7 @@ use crate::collector::ppo::PPOCollector;
 use crate::collector::az::AZCollector;
 use crate::python_interface::policy::PyPolicy;
 use crate::python_interface::env::PyBaseEnv;
-
+use crate::python_interface::error_mapping::MyError;
 
 #[pyclass(name="CollectedData")]
 pub struct PyCollectedData {
@@ -117,9 +117,9 @@ pub struct PyBaseCollector {
 #[pymethods]
 impl PyBaseCollector {
     // Collects Data
-    fn collect(&self, env: PyRef<PyBaseEnv>, policy: &PyPolicy) -> PyCollectedData{
-        let collected_data = self.collector.collect(&env.env, &*policy.policy);
-        PyCollectedData { inner: collected_data }
+    fn collect(&self, env: PyRef<PyBaseEnv>, policy: &PyPolicy) -> PyResult<PyCollectedData>{
+        let collected_data = self.collector.collect(&env.env, &*policy.policy).map_err(MyError::from)?;
+        Ok(PyCollectedData { inner: collected_data })
     }
 }
 

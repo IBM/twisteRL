@@ -12,6 +12,8 @@ that they have been altered from the originals.
 */
 
 use std::collections::HashMap;
+use anyhow::{anyhow, Result};
+
 use crate::nn::policy::Policy;
 use crate::rl::env::Env;
 
@@ -30,6 +32,15 @@ pub struct CollectedData {
     pub actions: Vec<usize>,
     /// Additional data (e.g., GAE advantages, returns)
     pub additional_data: HashMap<String, Vec<f32>>,
+}
+
+/// Merge many episodes into one
+pub fn merge(mut chunks: Vec<CollectedData>) -> Result<CollectedData> {
+    let mut merged = chunks.pop().ok_or(anyhow!("Something went wrong. No data in collected data chunks to merge. "))?;
+    for chunk in chunks {
+        merged.merge(&chunk);
+    }
+    Ok(merged)
 }
 
 impl CollectedData {
@@ -73,7 +84,7 @@ impl CollectedData {
 }
 
 /// A generic trait for collecting data.
-pub trait Collector: Send + Sync{
+pub trait Collector: Send + Sync {
     /// Runs the collection process and returns accumulated data.
-    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> CollectedData;
+    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> Result<CollectedData>;
 }

@@ -12,10 +12,11 @@ that they have been altered from the originals.
 */
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
+use anyhow::Result;
 
 use crate::rl::env::Env;
 use crate::nn::policy::{Policy, sample};
-use crate::collector::collector::{CollectedData, Collector};
+use crate::collector::collector::{CollectedData, Collector, merge};
 use crate::rl::search::predict_probs_mcts;
 
 #[derive(Clone)]
@@ -107,32 +108,32 @@ impl AZCollector {
 }
 
 impl Collector for AZCollector {
-    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> CollectedData {
+    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> Result<CollectedData> {
         if self.num_cores == 1 {
-            merge(
+            Ok(merge(
                 (0..self.num_episodes).into_iter()  
                     .map(|_| self.single_collect(env, policy)) 
                     .collect()
-            )
+            )?)
         } else {
-            let pool: rayon::ThreadPool = ThreadPoolBuilder::new().num_threads(self.num_cores).build().unwrap();
+            let pool: rayon::ThreadPool = ThreadPoolBuilder::new().num_threads(self.num_cores).build()?;
             // Use the thread pool to run the generation in parallel
-            merge(pool.install(|| {
+            Ok(merge(pool.install(|| {
                 (0..self.num_episodes).into_par_iter()  // Create a parallel iterator over the range 0..num_episodes
                     .map(|_| self.single_collect(env, policy)) 
                     .collect()
-            }))
+            }))?)
         }
     }
 }
 
 /// Merge many episodes into one
-fn merge(mut chunks: Vec<CollectedData>) -> CollectedData {
-    let mut merged = chunks
-        .pop()
-        .expect("AZCollector::collect: no episodes to merge");
+fn merge(
+    mut chunks: Vec<CollectedData>,
+) -> Result<CollectedData> {
+    let mut merged = chunks.pop().ok_or(anyhow!("Something went wrong. No data in collected data chunks to merge. "))?;
     for chunk in chunks {
         merged.merge(&chunk);
     }
-    merged
+    Ok(merged)
 }
