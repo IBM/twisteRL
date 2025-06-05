@@ -16,7 +16,6 @@ use crate::rl::env::Env;
 
 use crate::rl::tree::Tree;
 use crate::nn::policy::{sample, Policy};
-use dyn_clone::clone_box;
 
 pub struct MCTSNode {
     pub state: Box<dyn Env>,
