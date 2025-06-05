@@ -52,10 +52,11 @@ impl PPOCollector {
 
     fn single_collect(
         & self,
-        mut env: Box<dyn Env>,
+        env: &Box<dyn Env>,
         policy: &Policy,
     ) -> CollectedData {
-        env.reset();
+        let mut env = env.clone();
+        env.reset(); // We do not care about the original env in the collect
 
         let mut obss = Vec::new();
         let mut log_probs  = Vec::new();
@@ -101,11 +102,11 @@ impl PPOCollector {
 }
 
 impl Collector for PPOCollector {
-    fn collect(&self, env: Box<dyn Env>, policy: &Policy) -> CollectedData {
+    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> CollectedData {
         if self.num_cores == 1 {
             merge(
                 (0..self.num_episodes).into_iter()  // Create a parallel iterator over the range 0..num_episodes
-                    .map(|_| self.single_collect(env.clone(), policy)) // For each item in the range run a collection
+                    .map(|_| self.single_collect(env, policy)) // For each item in the range run a collection
                     .collect()
             )
         } else {
@@ -113,7 +114,7 @@ impl Collector for PPOCollector {
             // Use the thread pool to run the generation in parallel
             merge(pool.install(|| {
                 (0..self.num_episodes).into_par_iter()  // Create a parallel iterator over the range 0..num_episodes
-                    .map(|_| self.single_collect(env.clone(), policy)) // For each item in the range run a collection
+                    .map(|_| self.single_collect(env, policy)) // For each item in the range run a collection
                     .collect()
             }))
         }

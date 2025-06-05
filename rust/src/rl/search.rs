@@ -16,7 +16,6 @@ use crate::rl::env::Env;
 
 use crate::rl::tree::Tree;
 use crate::nn::policy::{sample, Policy};
-use dyn_clone::clone_box;
 
 pub struct MCTSNode {
     pub state: Box<dyn Env>,
@@ -59,7 +58,7 @@ impl MCTSTree {
         for (action, &prob) in action_priors.iter().enumerate() {
             if prob <= 0.0 { continue; }
             
-            let mut next_state = clone_box(&*self.nodes[node_idx].val.state);
+            let mut next_state = self.nodes[node_idx].val.state.clone();
             next_state.step(action);
 
             self.add_child_to_node(
@@ -110,7 +109,7 @@ pub fn predict_probs_mcts(
     max_expand_depth: usize,
 ) -> Vec<f32> {
     // Perform the MCTS search starting from the given state
-    let root_state = clone_box(&*env);
+    let root_state = env.clone();
 
     // Get the initial policy and value from the neural network
     let (action_probs, _) = policy.full_predict(root_state.observe(), root_state.masks());

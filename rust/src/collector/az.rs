@@ -49,9 +49,10 @@ impl AZCollector {
     /// Runs one episode, returns its `CollectedData`
     fn single_collect(
         &self,
-        mut env: Box<dyn Env>,
+        env: &Box<dyn Env>,
         policy: &Policy,
     ) -> CollectedData {
+        let mut env = env.clone();
         env.reset();
 
         // Init data vecs
@@ -106,11 +107,11 @@ impl AZCollector {
 }
 
 impl Collector for AZCollector {
-    fn collect(&self, env: Box<dyn Env>, policy: &Policy) -> CollectedData {
+    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> CollectedData {
         if self.num_cores == 1 {
             merge(
                 (0..self.num_episodes).into_iter()  
-                    .map(|_| self.single_collect(env.clone(), policy)) 
+                    .map(|_| self.single_collect(env, policy)) 
                     .collect()
             )
         } else {
@@ -118,7 +119,7 @@ impl Collector for AZCollector {
             // Use the thread pool to run the generation in parallel
             merge(pool.install(|| {
                 (0..self.num_episodes).into_par_iter()  // Create a parallel iterator over the range 0..num_episodes
-                    .map(|_| self.single_collect(env.clone(), policy)) 
+                    .map(|_| self.single_collect(env, policy)) 
                     .collect()
             }))
         }

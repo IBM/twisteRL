@@ -75,5 +75,5 @@ impl CollectedData {
 /// A generic trait for collecting data.
 pub trait Collector: Send + Sync{
     /// Runs the collection process and returns accumulated data.
-    fn collect(&self, env: Box<dyn Env>, policy: &Policy) -> CollectedData;
+    fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> CollectedData;
 }

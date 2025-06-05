@@ -118,7 +118,7 @@ pub struct PyBaseCollector {
 impl PyBaseCollector {
     // Collects Data
     fn collect(&self, env: PyRef<PyBaseEnv>, policy: &Policy) -> PyCollectedData{
-        let collected_data = self.collector.collect(env.env.clone(), policy);
+        let collected_data = self.collector.collect(&env.env, policy);
         PyCollectedData { inner: collected_data }
     }
 }

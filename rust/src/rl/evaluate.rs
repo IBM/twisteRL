@@ -17,10 +17,9 @@ use rayon::ThreadPoolBuilder;
 use crate::rl::env::Env;
 use crate::nn::policy::Policy;
 use super::solve::solve; 
-use dyn_clone::clone_box;
 
 pub fn evaluate(
-    env: Box<dyn Env>,
+    env: &Box<dyn Env>,
     policy: &Policy,
     num_episodes: usize,
     deterministic: bool,
@@ -31,14 +30,14 @@ pub fn evaluate(
     max_expand_depth: usize,
     num_cores: usize,
 ) -> (f32, f32) {
-    let mut env = clone_box(&*env);
+    let mut env = env.clone();
     if num_cores <= 1 {
         let mut successes = 0.0;
         let mut rewards  = 0.0;
         for _ in 0..num_episodes {
             env.reset();
             let ((success, reward), _path) = solve(
-                env.clone(),
+                &env,
                 &policy,
                 deterministic,
                 num_searches,
@@ -61,10 +60,10 @@ pub fn evaluate(
             (0..num_episodes)
                 .into_par_iter()
                 .map(|_| {
-                    let mut env = clone_box(&*env);
+                    let mut env = env.clone();
                     env.reset();
                     let ((success, reward), _path) = solve(
-                        env,
+                        &env,
                         &policy,
                         deterministic,
                         num_searches,

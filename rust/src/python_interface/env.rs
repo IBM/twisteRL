@@ -126,7 +126,7 @@ pub fn solve_py(py_env: PyRef<PyBaseEnv>,
     num_mcts_searches: usize,
     c_puct: f32,
     max_expand_depth: usize) -> ((f32, f32), Vec<usize>) {
-        solve(py_env.env.clone(), policy, deterministic, num_searches, num_mcts_searches, c_puct, max_expand_depth)
+        solve(&py_env.env, policy, deterministic, num_searches, num_mcts_searches, c_puct, max_expand_depth)
 }
 
 
@@ -141,5 +141,5 @@ pub fn evaluate_py(py_env: PyRef<PyBaseEnv>,
     C: f32,
     max_expand_depth: usize,
     num_cores: usize) -> (f32, f32) {
-    evaluate(py_env.env.clone(), policy, num_episodes, deterministic, num_searches, num_mcts_searches, seed, C, max_expand_depth, num_cores)
+    evaluate(&py_env.env, policy, num_episodes, deterministic, num_searches, num_mcts_searches, seed, C, max_expand_depth, num_cores)
 }
