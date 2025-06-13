@@ -79,6 +79,14 @@ impl Puzzle {
 
 // This implements the necessary functions for the environment
 impl Env for Puzzle {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+
     fn num_actions(&self) -> usize {
         4
     }
