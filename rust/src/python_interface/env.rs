@@ -124,9 +124,9 @@ pub fn solve_py(py_env: PyRef<PyBaseEnv>,
     deterministic: bool,
     num_searches: usize,
     num_mcts_searches: usize,
-    c_puct: f32,
+    C: f32,
     max_expand_depth: usize) -> ((f32, f32), Vec<usize>) {
-        solve(&py_env.env, &*policy.policy, deterministic, num_searches, num_mcts_searches, c_puct, max_expand_depth)
+        solve(&py_env.env, &*policy.policy, deterministic, num_searches, num_mcts_searches, C, max_expand_depth)
 }
 
 
