@@ -1,11 +1,7 @@
 use pyo3::prelude::*;
 use crate::rl::env::Env;
 use crate::envs::puzzle::Puzzle;
-<<<<<<< vv_policy
 use crate::python_interface::policy::PyPolicy;
-=======
-use crate::nn::policy::Policy;
->>>>>>> main
 use crate::rl::solve::solve;
 use crate::rl::evaluate::evaluate;
 
@@ -124,31 +120,19 @@ impl PyPuzzleEnv {
 
 #[pyfunction(name = "solve")]
 pub fn solve_py(py_env: PyRef<PyBaseEnv>,
-<<<<<<< vv_policy
     policy: &PyPolicy,
-=======
-    policy: &Policy,
->>>>>>> main
     deterministic: bool,
     num_searches: usize,
     num_mcts_searches: usize,
     C: f32,
     max_expand_depth: usize) -> ((f32, f32), Vec<usize>) {
-<<<<<<< vv_policy
         solve(&py_env.env, &*policy.policy, deterministic, num_searches, num_mcts_searches, C, max_expand_depth)
-=======
-        solve(&py_env.env, policy, deterministic, num_searches, num_mcts_searches, C, max_expand_depth)
->>>>>>> main
 }
 
 
 #[pyfunction(name = "evaluate")]
 pub fn evaluate_py(py_env: PyRef<PyBaseEnv>,
-<<<<<<< vv_policy
     policy: &PyPolicy,
-=======
-    policy: &Policy,
->>>>>>> main
     num_episodes: usize,
     deterministic: bool,
     num_searches: usize,
@@ -157,9 +141,5 @@ pub fn evaluate_py(py_env: PyRef<PyBaseEnv>,
     C: f32,
     max_expand_depth: usize,
     num_cores: usize) -> (f32, f32) {
-<<<<<<< vv_policy
     evaluate(&py_env.env, &*policy.policy, num_episodes, deterministic, num_searches, num_mcts_searches, seed, C, max_expand_depth, num_cores)
-=======
-    evaluate(&py_env.env, policy, num_episodes, deterministic, num_searches, num_mcts_searches, seed, C, max_expand_depth, num_cores)
->>>>>>> main
 }
