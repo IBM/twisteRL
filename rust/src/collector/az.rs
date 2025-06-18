@@ -127,13 +127,3 @@ impl Collector for AZCollector {
     }
 }
 
-/// Merge many episodes into one
-fn merge(
-    mut chunks: Vec<CollectedData>,
-) -> Result<CollectedData> {
-    let mut merged = chunks.pop().ok_or(anyhow!("Something went wrong. No data in collected data chunks to merge. "))?;
-    for chunk in chunks {
-        merged.merge(&chunk);
-    }
-    Ok(merged)
-}
