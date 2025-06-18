@@ -5,7 +5,11 @@ use std::collections::HashMap;
 use crate::collector::collector::{Collector, CollectedData};
 use crate::collector::ppo::PPOCollector;
 use crate::collector::az::AZCollector;
+<<<<<<< vv_policy
 use crate::python_interface::policy::PyPolicy;
+=======
+use crate::nn::policy::Policy;
+>>>>>>> main
 use crate::python_interface::env::PyBaseEnv;
 
 
@@ -117,8 +121,13 @@ pub struct PyBaseCollector {
 #[pymethods]
 impl PyBaseCollector {
     // Collects Data
+<<<<<<< vv_policy
     fn collect(&self, env: PyRef<PyBaseEnv>, policy: &PyPolicy) -> PyCollectedData{
         let collected_data = self.collector.collect(&env.env, &*policy.policy);
+=======
+    fn collect(&self, env: PyRef<PyBaseEnv>, policy: &Policy) -> PyCollectedData{
+        let collected_data = self.collector.collect(&env.env, policy);
+>>>>>>> main
         PyCollectedData { inner: collected_data }
     }
 }
