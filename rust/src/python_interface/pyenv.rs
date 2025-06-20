@@ -44,6 +44,14 @@ impl PyEnvImpl {
 }
 
 impl Env for PyEnvImpl {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+
     // Sets the current difficulty
     fn set_difficulty(&mut self, difficulty: usize) {
         self.difficulty = difficulty;

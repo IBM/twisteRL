@@ -18,6 +18,23 @@ use crate::python_interface::policy::PyPolicy;
 use crate::python_interface::error_mapping::MyError;
 use crate::rl::solve::solve;
 use crate::rl::evaluate::evaluate;
+use std::any::Any;
+
+/// Generic helper functions for extracting concrete environment types from PyBaseEnv
+pub fn get_env_ref<T: Any>(base_env: &PyBaseEnv) -> PyResult<&T> {
+    base_env.env.as_any().downcast_ref::<T>()
+        .ok_or_else(|| pyo3::exceptions::PyTypeError::new_err(
+            format!("Expected environment of type {}", std::any::type_name::<T>())
+        ))
+}
+
+pub fn get_env_mut<T: Any>(base_env: &mut PyBaseEnv) -> PyResult<&mut T> {
+    base_env.env.as_any_mut().downcast_mut::<T>()
+        .ok_or_else(|| pyo3::exceptions::PyTypeError::new_err(
+            format!("Expected environment of type {}", std::any::type_name::<T>())
+        ))
+}
+
 
 #[pyclass(subclass)]
 pub struct PyBaseEnv {
@@ -87,13 +104,19 @@ impl PyBaseEnv {
     fn twists(&self) -> PyResult<(Vec<Vec<usize>>, Vec<Vec<usize>>)> {
         Ok(self.env.twists())
     }
+
+    // Hidden method to extract the Rust env as a pointer
+    fn __extract_env__(&self) -> PyResult<usize> {
+        // Return the Box pointer itself as a usize
+        let box_ptr = &self.env as *const Box<dyn Env> as usize;
+        Ok(box_ptr)
+    }
 }
 
 
 #[pyclass(name="Puzzle", extends=PyBaseEnv)]
-pub struct PyPuzzleEnv {
-    env: Box<Puzzle>,
-}
+pub struct PyPuzzleEnv;
+
 
 #[pymethods]
 impl PyPuzzleEnv {
@@ -107,45 +130,69 @@ impl PyPuzzleEnv {
     ) -> (Self, PyBaseEnv) {
         let puzzle = Puzzle::new(width, height, difficulty, depth_slope, max_depth);
         let env = Box::new(puzzle);
-        (PyPuzzleEnv { env: env.clone() }, PyBaseEnv { env: env })
+        (PyPuzzleEnv, PyBaseEnv { env: env })
     }
 
-    pub fn solved(&self) -> PyResult<bool> {
-        Ok(self.env.solved())
+    pub fn solved(slf: PyRef<'_, Self>) -> PyResult<bool> {
+        let puzzle = get_env_ref::<Puzzle>(slf.as_ref())?;
+        Ok(puzzle.solved())
     }
 
-    pub fn get_state(&self) -> PyResult<Vec<usize>> {
-        Ok(self.env.get_state())
+    pub fn get_state(slf: PyRef<'_, Self>) -> PyResult<Vec<usize>> {
+        let puzzle = get_env_ref::<Puzzle>(slf.as_ref())?;
+        Ok(puzzle.get_state())
     }
 
-    pub fn display(&self) -> PyResult<()> {
-        Ok(self.env.display())
+    pub fn display(slf: PyRef<'_, Self>) -> PyResult<()> {
+        let puzzle = get_env_ref::<Puzzle>(slf.as_ref())?;
+        Ok(puzzle.display())
     }
 
-    pub fn set_position(&mut self, x: usize, y: usize, val: usize) -> PyResult<()> {
-        Ok(self.env.set_position(x, y, val))
+    pub fn set_position(mut slf: PyRefMut<'_, Self>, x: usize, y: usize, val: usize) -> PyResult<()> {
+        let puzzle = get_env_mut::<Puzzle>(slf.as_mut())?;
+        Ok(puzzle.set_position(x, y, val))
     }
 
-    pub fn get_position(&self, x: usize, y: usize) -> PyResult<usize> {
-        Ok(self.env.get_position(x, y))
+    pub fn get_position(slf: PyRef<'_, Self>, x: usize, y: usize) -> PyResult<usize> {
+        let puzzle = get_env_ref::<Puzzle>(slf.as_ref())?;
+        Ok(puzzle.get_position(x, y))
     }
 }
 
 
+pub fn get_env<'a>(py_env: &'a Bound<'_, PyAny>) -> PyResult<&'a Box<dyn Env>> {
+    // try to call __extract_env__ on the Python side
+    let ptr_val = match py_env.call_method0("__extract_env__") {
+        Ok(val) => val,
+        Err(_) => {
+            return Err(pyo3::exceptions::PyTypeError::new_err(
+                "Object must implement __extract_env__ method",
+            ));
+        }
+    };
+    // extract the usize
+    let ptr: usize = ptr_val.extract()?;
+    // turn it back into a &Box<dyn Env>
+    unsafe { Ok(&*(ptr as *const Box<dyn Env>)) }
+}
+
+
 #[pyfunction(name = "solve")]
-pub fn solve_py(py_env: PyRef<PyBaseEnv>,
+pub fn solve_py(
+    py_env: &Bound<'_, PyAny>,
     policy: &PyPolicy,
     deterministic: bool,
     num_searches: usize,
     num_mcts_searches: usize,
     C: f32,
-    max_expand_depth: usize) -> ((f32, f32), Vec<usize>) {
-        solve(&py_env.env, &*policy.policy, deterministic, num_searches, num_mcts_searches, C, max_expand_depth)
+    max_expand_depth: usize) -> PyResult<((f32, f32), Vec<usize>)> {
+        let env_ref = get_env(py_env)?;
+        Ok(solve(env_ref, &*policy.policy, deterministic, num_searches, num_mcts_searches, C, max_expand_depth))
 }
 
 
 #[pyfunction(name = "evaluate")]
-pub fn evaluate_py(py_env: PyRef<PyBaseEnv>,
+pub fn evaluate_py(py_env: &Bound<'_, PyAny>,
     policy: &PyPolicy,
     num_episodes: usize,
     deterministic: bool,
@@ -155,5 +202,6 @@ pub fn evaluate_py(py_env: PyRef<PyBaseEnv>,
     C: f32,
     max_expand_depth: usize,
     num_cores: usize) -> PyResult<(f32, f32)> {
-    Ok(evaluate(&py_env.env, &*policy.policy, num_episodes, deterministic, num_searches, num_mcts_searches, seed, C, max_expand_depth, num_cores).map_err(MyError::from)?)
+    let env_ref = get_env(py_env)?;
+    Ok(evaluate(env_ref, &*policy.policy, num_episodes, deterministic, num_searches, num_mcts_searches, seed, C, max_expand_depth, num_cores).map_err(MyError::from)?)
 }

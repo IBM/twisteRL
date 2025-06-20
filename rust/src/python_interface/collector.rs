@@ -18,7 +18,7 @@ use crate::collector::collector::{Collector, CollectedData};
 use crate::collector::ppo::PPOCollector;
 use crate::collector::az::AZCollector;
 use crate::python_interface::policy::PyPolicy;
-use crate::python_interface::env::PyBaseEnv;
+use crate::python_interface::env::get_env;
 use crate::python_interface::error_mapping::MyError;
 
 #[pyclass(name="CollectedData")]
@@ -129,8 +129,9 @@ pub struct PyBaseCollector {
 #[pymethods]
 impl PyBaseCollector {
     // Collects Data
-    fn collect(&self, env: PyRef<PyBaseEnv>, policy: &PyPolicy) -> PyResult<PyCollectedData>{
-        let collected_data = self.collector.collect(&env.env, &*policy.policy).map_err(MyError::from)?;
+    fn collect(&self, py_env: &Bound<'_, PyAny>, policy: &PyPolicy) -> PyResult<PyCollectedData>{
+        let env_ref = get_env(py_env)?;
+        let collected_data = self.collector.collect(env_ref, &*policy.policy).map_err(MyError::from)?;
         Ok(PyCollectedData { inner: collected_data })
     }
 }

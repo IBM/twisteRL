@@ -12,9 +12,13 @@ that they have been altered from the originals.
 */
 
 use std::vec;
+use std::any::Any;
 use dyn_clone::DynClone;
 
 pub trait Env : DynClone + Send + Sync {
+    // Methods for downcasting
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
     // Returns the number of possible actions
     fn num_actions(&self) -> usize;
 
