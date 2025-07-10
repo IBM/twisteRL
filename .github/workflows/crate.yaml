@@ -1,0 +1,16 @@
+name: Publish Rust crate
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+
+jobs:
+  publish-crate:
+    name: Publish crate to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Publish crate
+        run: cargo publish --manifest-path rust/Cargo.toml --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
