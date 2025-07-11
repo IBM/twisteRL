@@ -3,8 +3,11 @@ name = "twisterl-rs"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+python_bindings = ["pyo3"]
+
 [dependencies]
-pyo3 = { version = "0.24.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.24.2", features = ["extension-module", "multiple-pymethods"], optional = true }
 nalgebra = "0.33.0"
 rand = "0.8.4"
 rayon = "1.1.0"
