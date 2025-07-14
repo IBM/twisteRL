@@ -15,38 +15,61 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          # Used for the x86_64 builds.
           - macos-13
-          # Used for the ARM builds.
           - macos-14
           - windows-latest
         python-version: ['3.9', '3.10', '3.11', '3.12']
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.os == 'macos-14' && 'arm64' || 'x64' }}
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: llvm-tools-preview
+
+      - name: Install Rust toolchain
+        if: runner.os != 'Windows'
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          source $HOME/.cargo/env
+          rustup component add llvm-tools-preview
+
+      - name: Install Rust toolchain (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest `
+            -Uri 'https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe' `
+            -UseBasicParsing `
+            -OutFile rustup-init.exe
+
+          Start-Process `
+            -FilePath .\rustup-init.exe `
+            -ArgumentList '-y','--default-toolchain','stable' `
+            -NoNewWindow -Wait
+
+          $Env:Path = "$Env:USERPROFILE\.cargo\bin;$Env:Path"
+
+          rustup component add llvm-tools-preview
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install maturin twine
           pip install .
+
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          command: build
-          args: --release -i python${{ matrix.python-version }}
-          manylinux: auto
-      - name: Release wheels
-        shell: bash
         run: |
-          ls -l rust/target/wheels/
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            rm rust/target/wheels/*-linux_*
-          fi
-          ls -l rust/target/wheels/
-          twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} rust/target/wheels/*
+          cd rust
+          maturin build --release -i python${{ matrix.python-version }}
+
+      # - name: Release wheels
+      #   shell: bash
+      #   run: |
+      #     ls -l rust/target/wheels/
+      #     if [[ "$RUNNER_OS" == "Linux" ]]; then
+      #       rm rust/target/wheels/*-linux_*
+      #     fi
+      #     ls -l rust/target/wheels/
+      #     twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} rust/target/wheels/*
