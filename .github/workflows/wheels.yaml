@@ -38,12 +38,12 @@ jobs:
         run: |
           maturin build --release -i python${{ matrix.python-version }} --features python_bindings
 
-      # - name: Release wheels
-      #   shell: bash
-      #   run: |
-      #     ls -l rust/target/wheels/
-      #     if [[ "$RUNNER_OS" == "Linux" ]]; then
-      #       rm rust/target/wheels/*-linux_*
-      #     fi
-      #     ls -l rust/target/wheels/
-      #     twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} rust/target/wheels/*
+      - name: Release wheels
+        shell: bash
+        run: |
+          ls -l rust/target/wheels/
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            rm rust/target/wheels/*-linux_*
+          fi
+          ls -l rust/target/wheels/
+          twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} rust/target/wheels/*
