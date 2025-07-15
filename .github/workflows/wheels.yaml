@@ -62,7 +62,7 @@ jobs:
       - name: Build wheels
         run: |
           cd rust
-          maturin build --release -i python${{ matrix.python-version }}
+          maturin build --release -i python${{ matrix.python-version }} --bindings pyo3
 
       # - name: Release wheels
       #   shell: bash
