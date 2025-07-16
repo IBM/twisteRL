@@ -2,6 +2,8 @@
 name = "twisterl-rs"
 version = "0.1.0"
 edition = "2021"
+description = "Reinforcement learning primitives and a Python extension for high performance training and inference."
+license = "Apache-2.0"
 
 [features]
 python_bindings = ["pyo3"]
