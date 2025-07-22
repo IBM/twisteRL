@@ -52,3 +52,21 @@ impl<T> Tree<T> {
         child_idx
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tree_add_child() {
+        let mut tree: Tree<i32> = Tree::new();
+        let root = tree.new_node(1);
+        let child = tree.add_child_to_node(2, root);
+
+        assert_eq!(root, 0);
+        assert_eq!(child, 1);
+        assert_eq!(tree.nodes.len(), 2);
+        assert_eq!(tree.nodes[root].children, vec![child]);
+        assert_eq!(tree.nodes[child].parent, Some(root));
+    }
+}
