@@ -165,3 +165,34 @@ pub fn sample_from_logits(probs: &Vec<f32>) -> usize {
     let mut rng = rand::thread_rng();  // Random number generator
     argmax(&probs.iter().map(|&v| v - rng.gen::<f32>().ln().abs().ln()).collect())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_argmax_basic() {
+        let v = vec![1.0, 2.0, 3.0];
+        assert_eq!(argmax(&v), 2);
+    }
+
+    #[test]
+    fn test_argmax_with_nan() {
+        let v = vec![f32::NAN, 1.0, 0.5];
+        assert_eq!(argmax(&v), 0);
+    }
+
+    #[test]
+    fn test_sample_range() {
+        let probs = vec![0.2, 0.3, 0.5];
+        let idx = sample(&probs);
+        assert!(idx < probs.len());
+    }
+
+    #[test]
+    fn test_sample_from_logits_range() {
+        let logits = vec![0.1, 2.0, 0.3];
+        let idx = sample_from_logits(&logits);
+        assert!(idx < logits.len());
+    }
+}
