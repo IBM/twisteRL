@@ -10,5 +10,5 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from twisterl.rl.az import AZ
-from twisterl.rl.ppo import PPO
+from twisterl.rl.az import AZ as AZ
+from twisterl.rl.ppo import PPO as PPO

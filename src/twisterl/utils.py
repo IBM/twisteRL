@@ -25,8 +25,8 @@ def dynamic_import(path):
 
 
 def json_load_tuples(dct):
-    if '__tuple_list__' in dct:
-        return [tuple(item) for item in dct['list']]
+    if "__tuple_list__" in dct:
+        return [tuple(item) for item in dct["list"]]
     return dct
 
 
@@ -38,9 +38,19 @@ def prepare_algorithm(config, run_path=None, load_checkpoint_path=None):
     # Import policy class and make policy
     policy_cls = dynamic_import(config["policy_cls"])
     obs_perms, act_perms = env.twists()
-    policy = policy_cls(env.obs_shape(), env.num_actions(), **config["policy"], obs_perms=obs_perms, act_perms=act_perms)
+    policy = policy_cls(
+        env.obs_shape(),
+        env.num_actions(),
+        **config["policy"],
+        obs_perms=obs_perms,
+        act_perms=act_perms,
+    )
     if load_checkpoint_path is not None:
-        policy.load_state_dict(torch.load(open(load_checkpoint_path, "rb"), map_location=torch.device('cpu')))
+        policy.load_state_dict(
+            torch.load(
+                open(load_checkpoint_path, "rb"), map_location=torch.device("cpu")
+            )
+        )
 
     # Import algo class and make algorithm
     algo_cls = dynamic_import(config["algorithm_cls"])

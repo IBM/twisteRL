@@ -10,4 +10,4 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from twisterl.nn.policy import BasicPolicy, Conv1dPolicy
+from twisterl.nn.policy import BasicPolicy as BasicPolicy, Conv1dPolicy as Conv1dPolicy

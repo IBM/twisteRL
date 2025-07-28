@@ -14,16 +14,17 @@ import time
 
 from abc import abstractmethod
 from functools import wraps
+from loguru import logger
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
+
 from twisterl.defaults import make_config
 
 from twisterl import twisterl_rs
+
 evaluate = twisterl_rs.collector.evaluate
 solve = twisterl_rs.collector.solve
-
-from loguru import logger
 
 
 def timed(func):
@@ -31,15 +32,18 @@ def timed(func):
     def wrapper(*args, **kwargs):
         t0 = time.perf_counter_ns()
         result = func(*args, **kwargs)
-        elapsed_time = (time.perf_counter_ns() - t0) / 1e9  # Convert nanoseconds to seconds
+        elapsed_time = (
+            time.perf_counter_ns() - t0
+        ) / 1e9  # Convert nanoseconds to seconds
         return result, elapsed_time
+
     return wrapper
 
 
 class Algorithm:
     def __init__(self, env, policy, config, run_path=None):
         self.run_path = run_path
-        
+
         # Setup tensorboard writer
         self.tb_writer = SummaryWriter(run_path) if self.run_path is not None else None
 
@@ -47,7 +51,7 @@ class Algorithm:
         self.env = env
         self.obs_size = policy.obs_size
         self.num_actions = self.env.num_actions()
-        
+
         # Make full config
         self.config = make_config(type(self).__name__, config)
 
@@ -57,7 +61,9 @@ class Algorithm:
         self.rs_pol = self.policy.to_rust()
 
         # Make optimizer
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), **self.config["optimizer"])
+        self.optimizer = torch.optim.Adam(
+            self.policy.parameters(), **self.config["optimizer"]
+        )
 
     @timed
     @abstractmethod
@@ -67,14 +73,14 @@ class Algorithm:
 
     @timed
     @abstractmethod
-    def train_step(self, torch_data):        
+    def train_step(self, torch_data):
         """Receives data torch, performs one step of gradient descent, and returns any relevant metrics."""
         pass
 
     @timed
     def train(self, torch_data):
         losses = []
-        for epoch in range(self.config["training"]['num_epochs']):
+        for epoch in range(self.config["training"]["num_epochs"]):
             step_losses, step_time = self.train_step(torch_data)
             losses.append(step_losses)
         # Returning the final loss for now
@@ -89,7 +95,7 @@ class Algorithm:
     def evaluate(self, kwargs):
         """Receives python-rust object and evaluates the policy with some parameters."""
         return evaluate(self.env, self.rs_pol, **kwargs)
-    
+
     @timed
     def collect(self):
         """Collects data and returns the dataset"""
@@ -102,16 +108,23 @@ class Algorithm:
         train_dict = {}
 
         # Policy to rust
-        _, times_dict["to_rust"]  = self.sync_rs_policy()
+        _, times_dict["to_rust"] = self.sync_rs_policy()
 
         # Run eval (multiple evals)
         bench_dict["successes"] = dict()
         bench_dict["rewards"] = dict()
         for eval_name, eval_kwargs in self.config["evals"].items():
-            (bench_dict["successes"][eval_name], bench_dict["rewards"][eval_name]), times_dict[f"eval_{eval_name}"] = self.evaluate(eval_kwargs)
+            (
+                bench_dict["successes"][eval_name],
+                bench_dict["rewards"][eval_name],
+            ), times_dict[f"eval_{eval_name}"] = self.evaluate(eval_kwargs)
         bench_dict["difficulty"] = self.env.difficulty
-        bench_dict["success"] = bench_dict["successes"][self.config["learning"]["diff_metric"]]
-        bench_dict["reward"] = bench_dict["rewards"][self.config["learning"]["diff_metric"]]
+        bench_dict["success"] = bench_dict["successes"][
+            self.config["learning"]["diff_metric"]
+        ]
+        bench_dict["reward"] = bench_dict["rewards"][
+            self.config["learning"]["diff_metric"]
+        ]
 
         # Collect data
         data, times_dict["collect"] = self.collect()
@@ -126,46 +139,82 @@ class Algorithm:
         # Return metrics
         return times_dict, bench_dict, train_dict
 
-
     def learn(self, num_steps, best_metrics=None):
         # Init best metrics with a benchmark
         if best_metrics is None:
-            (success, reward), _ = self.evaluate(self.config["evals"][self.config["learning"]["diff_metric"]])
+            (success, reward), _ = self.evaluate(
+                self.config["evals"][self.config["learning"]["diff_metric"]]
+            )
             best_metrics = (self.env.difficulty, success, reward)
 
         # Loop for the given number of iterations
         for iteration in range(num_steps):
             (times_dict, bench_dict, train_dict), total_step_time = self.learn_step()
             times_dict["total"] = total_step_time
-            current_metrics = (bench_dict["difficulty"], bench_dict["success"], bench_dict["reward"])
+            current_metrics = (
+                bench_dict["difficulty"],
+                bench_dict["success"],
+                bench_dict["reward"],
+            )
             improved = current_metrics >= best_metrics
             if improved:
                 best_metrics = current_metrics
 
             # Maybe increase difficulty
-            if (bench_dict["success"] >= self.config["learning"]["diff_threshold"]) and self.env.difficulty < self.config["learning"]["diff_max"]:
+            if (
+                bench_dict["success"] >= self.config["learning"]["diff_threshold"]
+            ) and self.env.difficulty < self.config["learning"]["diff_max"]:
                 self.env.difficulty += 1
-                logger.info(f"({self.env.difficulty}/{iteration}) Diff increased to {self.env.difficulty}, {current_metrics}")
+                logger.info(
+                    f"({self.env.difficulty}/{iteration}) Diff increased to {self.env.difficulty}, {current_metrics}"
+                )
 
             # Pring logs
-            if (self.config["logging"]["log_freq"] > 0) and (iteration % self.config["logging"]["log_freq"] == 0):
-                logger.info(f"({self.env.difficulty}/{iteration}) {str(bench_dict)} | {str(times_dict)}")
+            if (self.config["logging"]["log_freq"] > 0) and (
+                iteration % self.config["logging"]["log_freq"] == 0
+            ):
+                logger.info(
+                    f"({self.env.difficulty}/{iteration}) {str(bench_dict)} | {str(times_dict)}"
+                )
 
             # Save checkpoints
-            if self.run_path and (self.config["logging"]["checkpoint_freq"] > 0) and ((iteration % self.config["logging"]["checkpoint_freq"] == 0)):
-                torch.save(self.policy.state_dict(), open(f"{self.run_path}/checkpoint_last.pt", "wb"))
-            
+            if (
+                self.run_path
+                and (self.config["logging"]["checkpoint_freq"] > 0)
+                and ((iteration % self.config["logging"]["checkpoint_freq"] == 0))
+            ):
+                torch.save(
+                    self.policy.state_dict(),
+                    open(f"{self.run_path}/checkpoint_last.pt", "wb"),
+                )
+
             if self.run_path and improved:
-                torch.save(self.policy.state_dict(), open(f"{self.run_path}/checkpoint_best.pt", "wb"))
-                logger.info(f"({self.env.difficulty}/{iteration}) Improved, saved checkpoint!")
+                torch.save(
+                    self.policy.state_dict(),
+                    open(f"{self.run_path}/checkpoint_best.pt", "wb"),
+                )
+                logger.info(
+                    f"({self.env.difficulty}/{iteration}) Improved, saved checkpoint!"
+                )
 
             # Write to tensorboard
             # Benchmarks
-            if (self.tb_writer is not None) and ((iteration % self.config["logging"]["log_freq"] == 0)):
+            if (self.tb_writer is not None) and (
+                (iteration % self.config["logging"]["log_freq"] == 0)
+            ):
                 for bname in ["difficulty", "success", "reward"]:
-                    self.tb_writer.add_scalar(f"Benchmark/{bname}", bench_dict[bname], iteration, new_style=True)
-                self.tb_writer.add_scalars(f"Benchmark/Detail/Success", bench_dict["successes"], iteration)
-                self.tb_writer.add_scalars(f"Benchmark/Detail/Reward", bench_dict["rewards"], iteration)
+                    self.tb_writer.add_scalar(
+                        f"Benchmark/{bname}",
+                        bench_dict[bname],
+                        iteration,
+                        new_style=True,
+                    )
+                self.tb_writer.add_scalars(
+                    "Benchmark/Detail/Success", bench_dict["successes"], iteration
+                )
+                self.tb_writer.add_scalars(
+                    "Benchmark/Detail/Reward", bench_dict["rewards"], iteration
+                )
 
                 # Algorithm
                 self.tb_writer.add_scalars("Losses", train_dict, iteration)
@@ -173,17 +222,25 @@ class Algorithm:
                 # Times
                 self.tb_writer.add_scalars("Times", times_dict, iteration)
 
-    def solve(self, state, deterministic=False, num_searches=1, num_mcts_searches=0, C=(2**0.5), max_expand_depth=1):
+    def solve(
+        self,
+        state,
+        deterministic=False,
+        num_searches=1,
+        num_mcts_searches=0,
+        C=(2**0.5),
+        max_expand_depth=1,
+    ):
         self.env.set_state(state)
 
-        # Then solve 
+        # Then solve
         (success, reward), actions = solve(
             self.env,
-            self.rs_pol, 
-            deterministic=deterministic, 
-            num_searches=num_searches, 
-            num_mcts_searches=num_mcts_searches, 
-            C=C, 
+            self.rs_pol,
+            deterministic=deterministic,
+            num_searches=num_searches,
+            num_mcts_searches=num_mcts_searches,
+            C=C,
             max_expand_depth=max_expand_depth,
         )
 

@@ -16,6 +16,7 @@ from twisterl.utils import dynamic_import
 
 Puzzle = twisterl_rs.env.Puzzle
 
+
 class PyEnv(twisterl_rs.env.PyEnv):
     def __new__(cls, pyenv_cls, **env_config):
         # we need to overload new instead of init due to PyO3

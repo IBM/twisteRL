@@ -31,51 +31,47 @@ def main(config_path: str, run_path: str, load_checkpoint_path: str, num_steps: 
 
     # Save config files to run_path
     shutil.copyfile(config_path, f"{run_path}/base_config.json")
-    json.dump(algorithm.config, open(f"{run_path}/full_algorithm_config.json", "w"), indent=4)
-    
+    json.dump(
+        algorithm.config, open(f"{run_path}/full_algorithm_config.json", "w"), indent=4
+    )
+
     # Learn
     algorithm.learn(num_steps)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Script to train RL algorithm."
-    )
-    
+    parser = argparse.ArgumentParser(description="Script to train RL algorithm.")
+
     parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="Path to config file (required)"
+        "--config", type=str, required=True, help="Path to config file (required)"
     )
     parser.add_argument(
         "--run_path",
         type=str,
         required=False,
         default=None,
-        help="Path to save checkpoings and tensorboard (optional)"
+        help="Path to save checkpoings and tensorboard (optional)",
     )
     parser.add_argument(
         "--load_checkpoint_path",
         type=str,
         required=False,
         default=None,
-        help="Path to checkpoint to load (optional)"
+        help="Path to checkpoint to load (optional)",
     )
     parser.add_argument(
         "--num_steps",
         type=int,
         required=False,
         default=int(1e9),
-        help="Number of training steps (optional)"
+        help="Number of training steps (optional)",
     )
-    
+
     # Parse arguments
     args = parser.parse_args()
     main(
-        config_path=args.config, 
-        run_path=args.run_path, 
-        load_checkpoint_path=args.load_checkpoint_path, 
-        num_steps=args.num_steps
+        config_path=args.config,
+        run_path=args.run_path,
+        load_checkpoint_path=args.load_checkpoint_path,
+        num_steps=args.num_steps,
     )
-

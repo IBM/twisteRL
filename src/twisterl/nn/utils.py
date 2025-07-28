@@ -11,7 +11,6 @@
 # that they have been altered from the originals.
 
 import torch
-import numpy as np
 from twisterl import twisterl_rs
 
 
@@ -20,20 +19,27 @@ def sequential_to_rust(seq):
     py_layers = list(seq)
     rs_linears = []
 
-    for l in range(len(py_layers)):
-        if type(py_layers[l]).__name__ == "Linear":
+    for layer_idx in range(len(py_layers)):
+        if type(py_layers[layer_idx]).__name__ == "Linear":
             rs_linears.append(
                 twisterl_rs.nn.Linear(
-                    py_layers[l].weight.cpu().detach().numpy().T.flatten().tolist(),
-                    py_layers[l].bias.cpu().detach().numpy().tolist(),
-                    ((l + 1) < len(py_layers)) and (type(py_layers[l + 1]).__name__ == "ReLU")
+                    py_layers[layer_idx]
+                    .weight.cpu()
+                    .detach()
+                    .numpy()
+                    .T.flatten()
+                    .tolist(),
+                    py_layers[layer_idx].bias.cpu().detach().numpy().tolist(),
+                    ((layer_idx + 1) < len(py_layers))
+                    and (type(py_layers[layer_idx + 1]).__name__ == "ReLU"),
                 )
             )
-        elif type(py_layers[l]).__name__ not in ("ReLU", "Linear"):
-            raise TypeError(f"Layer of type {type(py_layers[l]).__name__} not supported in Sequential.")
+        elif type(py_layers[layer_idx]).__name__ not in ("ReLU", "Linear"):
+            raise TypeError(
+                f"Layer of type {type(py_layers[layer_idx]).__name__} not supported in Sequential."
+            )
 
     return twisterl_rs.nn.Sequential(rs_linears)
-
 
 
 def embeddingbag_to_rust(eb, obs_shape, conv_dim):
@@ -42,38 +48,44 @@ def embeddingbag_to_rust(eb, obs_shape, conv_dim):
     if type(eb).__name__ == "Linear":
         return twisterl_rs.nn.EmbeddingBag(
             eb.weight.cpu().detach().numpy().T.tolist(),
-            eb.bias.cpu().detach().numpy().tolist() if hasattr(eb, "bias") else ([0.0]*eb.weight.shape[0]),
+            (
+                eb.bias.cpu().detach().numpy().tolist()
+                if hasattr(eb, "bias")
+                else ([0.0] * eb.weight.shape[0])
+            ),
             True,
             obs_shape,
-            conv_dim
+            conv_dim,
         )
     elif type(eb).__name__ == "EmbeddingBag":
         return twisterl_rs.nn.EmbeddingBag(
             eb.weight.cpu().detach().numpy().tolist(),
-            [0.0]*eb.weight.shape[1],
+            [0.0] * eb.weight.shape[1],
             True,
             obs_shape,
-            conv_dim
+            conv_dim,
         )
     elif type(eb).__name__ == "Conv1d":
         return twisterl_rs.nn.EmbeddingBag(
             eb.weight.squeeze(2).cpu().detach().numpy().T.tolist(),
-            [0.0]*(eb.weight.shape[0]*obs_shape[1-conv_dim]),
+            [0.0] * (eb.weight.shape[0] * obs_shape[1 - conv_dim]),
             True,
             obs_shape,
-            conv_dim
+            conv_dim,
         )
     else:
-        raise TypeError(f"Layer of type {type(eb).__name__} not supported as EmbeddingBag.")
+        raise TypeError(
+            f"Layer of type {type(eb).__name__} not supported as EmbeddingBag."
+        )
 
 
 def make_sequential(in_size, layers, final_relu=True):
     layer_list = []
-    
+
     for out_size in layers:
-        layer_list.append(torch.nn.Linear(in_size, out_size))  
-        layer_list.append(torch.nn.ReLU())                     
-        in_size = out_size                  
+        layer_list.append(torch.nn.Linear(in_size, out_size))
+        layer_list.append(torch.nn.ReLU())
+        in_size = out_size
 
     if not final_relu:
         layer_list = layer_list[:-1]

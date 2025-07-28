@@ -26,39 +26,35 @@ POLICY_CONFIG = {
 # Evaluation
 
 BASE_EVAL_CONFIG = {
-    "num_episodes": 100, 
-    "deterministic": True, 
-    "num_searches": 1, 
-    "num_mcts_searches": 0, 
-    "seed": 0, 
+    "num_episodes": 100,
+    "deterministic": True,
+    "num_searches": 1,
+    "num_mcts_searches": 0,
+    "seed": 0,
     "num_cores": 32,
-    'C': 1.41,
-    'max_expand_depth': 1
+    "C": 1.41,
+    "max_expand_depth": 1,
 }
 
 EVALS_CONFIG = {
     "ppo_deterministic": {
-        "deterministic": True, 
-        "num_searches": 1, 
+        "deterministic": True,
+        "num_searches": 1,
     },
-
     "ppo_1": {
-        "deterministic": False, 
-        "num_searches": 1, 
+        "deterministic": False,
+        "num_searches": 1,
     },
-
     "ppo_10": {
-        "deterministic": False, 
-        "num_searches": 10, 
+        "deterministic": False,
+        "num_searches": 10,
     },
-
     "mcts_100": {
-        "deterministic": True, 
-        "num_searches": 1, 
-        "num_mcts_searches": 100, 
+        "deterministic": True,
+        "num_searches": 1,
+        "num_mcts_searches": 100,
     },
 }
-
 
 
 # Training
@@ -66,67 +62,53 @@ EVALS_CONFIG = {
 PPO_CONFIG = {
     # Collect params
     "collecting": {
-        'num_cores': 32,
-        'num_episodes': 512*32,
-        'lambda': 0.995,
-        'gamma': 0.995,
+        "num_cores": 32,
+        "num_episodes": 512 * 32,
+        "lambda": 0.995,
+        "gamma": 0.995,
     },
-
     # Train params
     "training": {
-        'num_epochs': 10,
-        'vf_coef': 0.8,
-        'ent_coef': 0.01, #0.05,
-        'clip_ratio': 0.1,
-        'normalize_advantage': False,
+        "num_epochs": 10,
+        "vf_coef": 0.8,
+        "ent_coef": 0.01,  # 0.05,
+        "clip_ratio": 0.1,
+        "normalize_advantage": False,
     },
-
     # Optimizer
-    "optimizer": {
-        "lr": 0.0003
-    }
+    "optimizer": {"lr": 0.0003},
 }
 
 AZ_CONFIG = {
     # Collect params
     "collecting": {
-        'num_cores': 32,
-        'num_episodes': 512,
+        "num_cores": 32,
+        "num_episodes": 512,
         "num_mcts_searches": 1000,
-        'C': 1.41,
-        'max_expand_depth': 1,
-        'seed': 123
+        "C": 1.41,
+        "max_expand_depth": 1,
+        "seed": 123,
     },
-
     # Train params
     "training": {
-        'num_epochs': 10,
+        "num_epochs": 10,
     },
-
     # Optimizer
-    "optimizer": {
-        "lr": 0.0003
-    }
+    "optimizer": {"lr": 0.0003},
 }
 
-ALGO_CONFIG = {
-    "PPO": PPO_CONFIG,
-    "AZ": AZ_CONFIG
-}
+ALGO_CONFIG = {"PPO": PPO_CONFIG, "AZ": AZ_CONFIG}
 
 # Learning
 
-LEARNING_CONFIG = {
-    'diff_threshold': 0.85,
-    'diff_metric': "ppo_deterministic"
-}
+LEARNING_CONFIG = {"diff_threshold": 0.85, "diff_metric": "ppo_deterministic"}
 
 
 # Logging and checkpoints
 
 LOGGING_CONFIG = {
-    'log_freq': 1,
-    'checkpoint_freq': 10,
+    "log_freq": 1,
+    "checkpoint_freq": 10,
 }
 
 
