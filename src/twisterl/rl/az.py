@@ -14,13 +14,13 @@ import torch
 import numpy as np
 
 from twisterl.rl.algorithm import Algorithm, timed
-from twisterl import twisterl_rs
+from twisterl import twisterl
 
 
 class AZ(Algorithm):
     def __init__(self, env, policy, config, run_path=None):
         super().__init__(env, policy, config, run_path)
-        self.collector = twisterl_rs.collector.AZCollector(**self.config["collecting"])
+        self.collector = twisterl.collector.AZCollector(**self.config["collecting"])
 
     @timed
     def data_to_torch(self, data):
