@@ -1,5 +1,5 @@
 [package]
-name = "twisterl-rs"
+name = "twisterl"
 version = "0.1.0"
 edition = "2021"
 description = "Reinforcement learning primitives and a Python extension for high performance training and inference."

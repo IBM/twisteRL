@@ -29,6 +29,6 @@ packages = ["twisterl"]
 [tool.maturin]
 features = ["pyo3/extension-module", "python_bindings"]
 profile = "release"
-module-name = "twisterl.twisterl_rs"
+module-name = "twisterl.twisterl"
 
 [linkedProjects]
