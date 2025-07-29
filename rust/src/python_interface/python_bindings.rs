@@ -71,7 +71,7 @@ fn add_twisterl_functionality(py: Python, m: &Bound<'_, PyModule>) -> PyResult<(
 
 // Full package
 #[pymodule]
-fn twisterl_rs(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn twisterl(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     add_twisterl_functionality(py, m)?;
     Ok(())
 }

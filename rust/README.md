@@ -1,6 +1,6 @@
-# twisterl-rs
+# twisterl
 
-`twisterl-rs` provides the Rust core for the [TwisteRL](https://github.com/IBM/twisteRL) project. It implements reinforcement learning primitives and a Python extension for high performance training and inference.
+`twisterl` provides the Rust core for the [TwisteRL](https://github.com/IBM/twisteRL) project. It implements reinforcement learning primitives and a Python extension for high performance training and inference.
 
 ## Features
 
@@ -17,7 +17,7 @@ Add the crate to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-twisterl-rs = { version = "0.1"}
+twisterl = { version = "0.1"}
 ```
 
 ## Python interface
@@ -28,7 +28,7 @@ In this case, add the crate to your `Cargo.toml` with the `python_bindings` feat
 
 ```toml
 [dependencies]
-twisterl-rs = { version = "0.1", features = ["python_bindings"]}
+twisterl = { version = "0.1", features = ["python_bindings"]}
 ```
 
 ## License

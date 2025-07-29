@@ -12,7 +12,7 @@
 
 import torch
 import numpy as np
-from twisterl import twisterl_rs
+from twisterl import twisterl
 from twisterl.nn.utils import make_sequential, embeddingbag_to_rust, sequential_to_rust
 
 
@@ -66,7 +66,7 @@ class BasicPolicy(torch.nn.Module):
         return actions_np, value_np
 
     def to_rust(self):
-        return twisterl_rs.nn.Policy(
+        return twisterl.nn.Policy(
             embeddingbag_to_rust(self.embeddings, [self.obs_size], 0),
             sequential_to_rust(self.common),
             sequential_to_rust(self.action),
@@ -128,7 +128,7 @@ class Conv1dPolicy(BasicPolicy):
         return super().forward(x)
 
     def to_rust(self):
-        return twisterl_rs.nn.Policy(
+        return twisterl.nn.Policy(
             embeddingbag_to_rust(self.conv_layer, self.obs_shape, self.conv_dim),
             sequential_to_rust(self.common),
             sequential_to_rust(self.action),

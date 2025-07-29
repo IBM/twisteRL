@@ -10,14 +10,14 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from twisterl import twisterl_rs
+from twisterl import twisterl
 
 from twisterl.utils import dynamic_import
 
-Puzzle = twisterl_rs.env.Puzzle
+Puzzle = twisterl.env.Puzzle
 
 
-class PyEnv(twisterl_rs.env.PyEnv):
+class PyEnv(twisterl.env.PyEnv):
     def __new__(cls, pyenv_cls, **env_config):
         # we need to overload new instead of init due to PyO3
         env_cls = dynamic_import(pyenv_cls)
