@@ -64,7 +64,8 @@ def validate_algorithm_from_hub(repo_id: str, revision: str = "main"):
         "has_weights": has_weights
     }
 
-def pull_hub_algorithm(repo_id, model_path = "../models/", revision = "main", validate = True):
+def pull_hub_algorithm(repo_id, model_path = "../models/", revision = "main", validate = False):
+
     validate_algorithm = validate_algorithm_from_hub(repo_id)
     if validate and not validate_algorithm["is_valid"]:
         logger.info(validate_algorithm)
@@ -99,7 +100,6 @@ def prepare_hf_algorithm(model_path, force_seq2seq= False, force_causal = False,
         model_path,
         local_files_only=True
     )
-    
     # Enable GPU mode if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
