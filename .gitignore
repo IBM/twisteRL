@@ -75,3 +75,6 @@ runs/
 # Rust
 rust/target
 target
+
+# Downloaded Models
+/models
