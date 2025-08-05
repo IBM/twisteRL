@@ -1,0 +1,15 @@
+[package]
+name = "grid_world"
+version = "0.1.0"
+edition = "2021"
+description = "Custom environment example"
+license = "Apache-2.0"
+
+[lib]
+name = "grid_world"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.24", features = ["extension-module"] }
+twisterl = { path = "../../rust", features = ["python_bindings"] }
+rand = "0.8"
