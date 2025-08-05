@@ -22,3 +22,5 @@ env.step(1)
 print("After step:", env.get_state())
 print("Reached goal?", env.at_goal())
 ```
+
+You can also see a training and inference example in the jupyter notebook [game.ipynb](game.ipynb) 
