@@ -89,3 +89,37 @@ impl EmbeddingBag {
 fn relu(x: f32) -> f32 {
    if x > 0.0 { x } else { 0.0 }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_linear_forward() {
+        let linear = Linear::new(vec![1.0, 2.0, 3.0, 4.0], vec![1.0, 1.0], false);
+        let input = DVector::from_vec(vec![1.0, 2.0]);
+        let out = linear.forward(&input);
+        assert_eq!(out, DVector::from_vec(vec![8.0, 11.0]));
+    }
+
+    #[test]
+    fn test_linear_forward_relu() {
+        let linear = Linear::new(vec![-1.0, -2.0, 0.0, 1.0], vec![0.0, 0.0], true);
+        let input = DVector::from_vec(vec![1.0, 2.0]);
+        let out = linear.forward(&input);
+        assert_eq!(out, DVector::from_vec(vec![0.0, 0.0]));
+    }
+
+    #[test]
+    fn test_embedding_bag_forward() {
+        let emb = EmbeddingBag::new(
+            vec![vec![1.0, 2.0], vec![3.0, 4.0]],
+            vec![0.0, 0.0],
+            false,
+            vec![2],
+            0,
+        );
+        let out = emb.forward(&vec![0, 1]);
+        assert_eq!(out, DVector::from_vec(vec![4.0, 6.0]));
+    }
+}

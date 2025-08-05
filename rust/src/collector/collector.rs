@@ -88,3 +88,33 @@ pub trait Collector: Send + Sync {
     /// Runs the collection process and returns accumulated data.
     fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> Result<CollectedData>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merge_collected_data() {
+        let d1 = CollectedData::new(
+            vec![vec![0]],
+            vec![vec![0.1]],
+            vec![0.2],
+            vec![0.3],
+            vec![1],
+        );
+
+        let d2 = CollectedData::new(
+            vec![vec![1]],
+            vec![vec![0.4]],
+            vec![0.5],
+            vec![0.6],
+            vec![0],
+        );
+
+        let merged = merge(vec![d1, d2]).unwrap();
+
+        assert_eq!(merged.obs.len(), 2);
+        assert_eq!(merged.logits.len(), 2);
+        assert_eq!(merged.actions, vec![0, 1]);
+    }
+}
