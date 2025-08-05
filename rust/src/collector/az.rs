@@ -111,8 +111,8 @@ impl Collector for AZCollector {
     fn collect(&self, env: &Box<dyn Env>, policy: &Policy) -> Result<CollectedData> {
         if self.num_cores == 1 {
             Ok(merge(
-                (0..self.num_episodes).into_iter()  
-                    .map(|_| self.single_collect(env, policy)) 
+                (0..self.num_episodes).into_iter()
+                    .map(|_| self.single_collect(env, policy))
                     .collect()
             )?)
         } else {
@@ -120,10 +120,66 @@ impl Collector for AZCollector {
             // Use the thread pool to run the generation in parallel
             Ok(merge(pool.install(|| {
                 (0..self.num_episodes).into_par_iter()  // Create a parallel iterator over the range 0..num_episodes
-                    .map(|_| self.single_collect(env, policy)) 
+                    .map(|_| self.single_collect(env, policy))
                     .collect()
             }))?)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::nn::layers::{EmbeddingBag, Linear};
+    use crate::nn::modules::Sequential;
+    use crate::nn::policy::Policy;
+    use crate::rl::env::Env;
+
+    #[derive(Clone)]
+    struct DummyEnv { step: usize }
+
+    impl DummyEnv {
+        fn new() -> Self { Self { step: 0 } }
+    }
+
+    impl Env for DummyEnv {
+        fn as_any(&self) -> &dyn std::any::Any { self }
+        fn as_any_mut(&mut self) -> &mut dyn std::any::Any { self }
+        fn num_actions(&self) -> usize { 1 }
+        fn obs_shape(&self) -> Vec<usize> { vec![1] }
+        fn set_state(&mut self, state: Vec<i64>) { self.step = state[0] as usize; }
+        fn reset(&mut self) { self.step = 0; }
+        fn step(&mut self, _action: usize) { self.step += 1; }
+        fn masks(&self) -> Vec<bool> { vec![true] }
+        fn is_final(&self) -> bool { self.step >= 1 }
+        fn reward(&self) -> f32 { 1.0 }
+        fn observe(&self) -> Vec<usize> { vec![0] }
+    }
+
+    fn dummy_policy() -> Policy {
+        let emb = EmbeddingBag::new(vec![vec![1.0]], vec![0.0], false, vec![1], 0);
+        let lin = Linear::new(vec![1.0], vec![0.0], false);
+        let seq_a = Sequential::new(vec![Box::new(lin.clone())]);
+        let seq_v = Sequential::new(vec![Box::new(lin)]);
+        Policy::new(
+            Box::new(emb),
+            Box::new(Sequential::new(vec![])),
+            Box::new(seq_a),
+            Box::new(seq_v),
+            vec![],
+            vec![],
+        )
+    }
+
+    #[test]
+    fn test_azcollector_collect() {
+        let env: Box<dyn Env> = Box::new(DummyEnv::new());
+        let policy = dummy_policy();
+        let collector = AZCollector::new(1, 1, 1.0, 1, 1);
+
+        let data = collector.collect(&env, &policy).unwrap();
+        assert_eq!(data.obs.len(), 2);
+        assert!(data.additional_data.contains_key("remaining_values"));
     }
 }
 

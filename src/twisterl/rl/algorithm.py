@@ -21,10 +21,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 from twisterl.defaults import make_config
 
-from twisterl import twisterl_rs
+from twisterl import twisterl
 
-evaluate = twisterl_rs.collector.evaluate
-solve = twisterl_rs.collector.solve
+evaluate = twisterl.collector.evaluate
+solve = twisterl.collector.solve
 
 
 def timed(func):

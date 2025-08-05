@@ -176,8 +176,27 @@ impl Env for Puzzle {
         }
     }
 
-    fn observe(&self,) -> Vec<usize> {    
-        self.state.iter().enumerate().map(|(i, v)| i * self.height * self.width + v).collect()  
+fn observe(&self,) -> Vec<usize> {
+        self.state.iter().enumerate().map(|(i, v)| i * self.height * self.width + v).collect()
     }
-    
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_puzzle_solved() {
+        let puzzle = Puzzle::new(2, 2, 0, 1, 10);
+        assert!(puzzle.solved());
+    }
+
+    #[test]
+    fn test_puzzle_step_and_masks() {
+        let mut puzzle = Puzzle::new(2, 2, 0, 1, 10);
+        puzzle.step(2); // move right
+        assert_eq!(puzzle.zero_location, (1, 0));
+        assert_eq!(puzzle.masks(), vec![true, false, false, true]);
+    }
 }

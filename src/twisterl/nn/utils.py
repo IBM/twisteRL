@@ -11,7 +11,7 @@
 # that they have been altered from the originals.
 
 import torch
-from twisterl import twisterl_rs
+from twisterl import twisterl
 
 
 def sequential_to_rust(seq):
@@ -22,7 +22,7 @@ def sequential_to_rust(seq):
     for layer_idx in range(len(py_layers)):
         if type(py_layers[layer_idx]).__name__ == "Linear":
             rs_linears.append(
-                twisterl_rs.nn.Linear(
+                twisterl.nn.Linear(
                     py_layers[layer_idx]
                     .weight.cpu()
                     .detach()
@@ -39,14 +39,14 @@ def sequential_to_rust(seq):
                 f"Layer of type {type(py_layers[layer_idx]).__name__} not supported in Sequential."
             )
 
-    return twisterl_rs.nn.Sequential(rs_linears)
+    return twisterl.nn.Sequential(rs_linears)
 
 
 def embeddingbag_to_rust(eb, obs_shape, conv_dim):
     """Exports an EmbeddingBag module to rust (followed by a ReLU)"""
 
     if type(eb).__name__ == "Linear":
-        return twisterl_rs.nn.EmbeddingBag(
+        return twisterl.nn.EmbeddingBag(
             eb.weight.cpu().detach().numpy().T.tolist(),
             (
                 eb.bias.cpu().detach().numpy().tolist()
@@ -58,7 +58,7 @@ def embeddingbag_to_rust(eb, obs_shape, conv_dim):
             conv_dim,
         )
     elif type(eb).__name__ == "EmbeddingBag":
-        return twisterl_rs.nn.EmbeddingBag(
+        return twisterl.nn.EmbeddingBag(
             eb.weight.cpu().detach().numpy().tolist(),
             [0.0] * eb.weight.shape[1],
             True,
@@ -66,7 +66,7 @@ def embeddingbag_to_rust(eb, obs_shape, conv_dim):
             conv_dim,
         )
     elif type(eb).__name__ == "Conv1d":
-        return twisterl_rs.nn.EmbeddingBag(
+        return twisterl.nn.EmbeddingBag(
             eb.weight.squeeze(2).cpu().detach().numpy().T.tolist(),
             [0.0] * (eb.weight.shape[0] * obs_shape[1 - conv_dim]),
             True,

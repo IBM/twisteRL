@@ -42,3 +42,15 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/src
         run: pytest -q
+  rust-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - name: Cargo test
+        run: cargo test --manifest-path rust/Cargo.toml -- --nocapture
