@@ -61,7 +61,7 @@ The `examples/grid_world` custom environment example [here](examples/grid_world)
    pyo3 = { version = "0.20", features = ["extension-module"] }
    twisterl = { path = "path/to/twisterl/rust", features = ["python_bindings"] }
    # Or using the official crate:
-   # twisterl = { version = "0.2.0",, features = ["python_bindings"] }
+   # twisterl = { version = "a.b.c", features = ["python_bindings"] }
    ```
 
 3. **Implement the environment** by defining a struct and implementing `twisterl::rl::env::Env` for it. Provide logic for `reset`, `step`, `observe`, `reward`, etc.
