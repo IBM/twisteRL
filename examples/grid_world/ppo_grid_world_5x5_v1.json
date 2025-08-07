@@ -1,0 +1,63 @@
+{
+    "env_cls": "grid_world.GridWorld",
+    "env": {
+        "difficulty": 1,
+        "height": 5,
+        "width": 5,
+        "max_steps": 64
+    },
+
+    "policy_cls": "twisterl.nn.BasicPolicy",
+    "policy": {
+        "embedding_size": 512,
+        "common_layers": [128],
+        "policy_layers": [],
+        "value_layers": []
+    },
+
+    "algorithm_cls": "twisterl.rl.PPO",
+    "algorithm": {
+        "collecting": {
+            "num_cores": 32,
+            "num_episodes": 1024,
+            "lambda": 0.995,
+            "gamma": 0.995
+        },
+
+        "training": {
+            "num_epochs": 10,
+            "vf_coef": 0.8,
+            "ent_coef": 0.01, 
+            "clip_ratio": 0.1,
+            "normalize_advantage": true
+        },
+
+        "learning": {
+            "diff_threshold": 0.85,
+            "diff_max": 10, 
+            "diff_metric": "ppo_1"
+        },
+
+        "optimizer": {
+            "lr": 0.00015
+        },
+
+        "evals": {        
+            "ppo_1": {
+                "num_episodes": 100, 
+                "deterministic": false, 
+                "num_searches": 1
+            },
+            "ppo_10": {
+                "num_episodes": 100, 
+                "deterministic": false, 
+                "num_searches": 10
+            }
+        },
+
+        "logging": {
+            "log_freq": 1,
+            "checkpoint_freq": 10
+        }
+    }
+}

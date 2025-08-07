@@ -37,6 +37,68 @@ A larger version (4x4) is available: `examples/ppo_puzzle15_v1.json`.
 ### Inference
 Check the notebook example [here](examples/puzzle.ipynb)!
 
+## Creating your own environment
+
+The `examples/grid_world` custom environment example [here](examples/grid_world) shows how to implement an environment in Rust and expose it to Python with PyO3. You can use it as a template:
+
+1. **Create a new crate**
+   ```sh
+   cargo new --lib examples/my_env
+   ```
+
+2. **Add dependencies** in `examples/my_env/Cargo.toml`:
+   ```toml
+   [package]
+   name = "my_env"
+   version = "0.1.0"
+   edition = "2021"
+
+   [lib]
+   name = "my_env"
+   crate-type = ["cdylib"]
+
+   [dependencies]
+   pyo3 = { version = "0.20", features = ["extension-module"] }
+   twisterl = { path = "path/to/twisterl/rust", features = ["python_bindings"] }
+   # Or using the official crate:
+   # twisterl = { version = "a.b.c", features = ["python_bindings"] }
+   ```
+
+3. **Implement the environment** by defining a struct and implementing `twisterl::rl::env::Env` for it. Provide logic for `reset`, `step`, `observe`, `reward`, etc.
+
+4. **Expose it to Python** using `PyBaseEnv`:
+   ```rust
+   use pyo3::prelude::*;
+   use twisterl::python_interface::env::PyBaseEnv;
+
+   #[pyclass(name = "MyEnv", extends = PyBaseEnv)]
+   struct PyMyEnv;
+
+   #[pymethods]
+   impl PyMyEnv {
+       #[new]
+       fn new(...) -> (Self, PyBaseEnv) {
+           let env = MyEnv::new(...);
+           (PyMyEnv, PyBaseEnv { env: Box::new(env) })
+       }
+   }
+   ```
+
+5. **Add a `pyproject.toml`** describing the Python package so maturin can build a wheel.
+
+6. **Build and install** the module:
+   ```sh
+   pip install .
+   ```
+
+7. **Use it from Python**:
+   ```python
+   import my_env
+   env = my_env.MyEnv(...)
+   obs = env.reset()
+   ```
+
+Refer to [grid_world](examples/grid_world) for a complete working example.
 
 ## 🚀 Key Features 
 - **High-Performance Core**: RL episode loop implemented in Rust for faster training and inference
